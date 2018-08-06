@@ -15,7 +15,7 @@ namespace TestReportGenerator
     public class StartTest : CodeActivity
     {
 
-        //Arguments of Start Test Activity
+        // Finished Creation of Start Activity
         private InArgument<String> statusValue = "STARTED";
 
         [Category("Status")]

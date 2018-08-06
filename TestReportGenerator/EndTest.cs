@@ -15,7 +15,7 @@ namespace TestReportGenerator
     public class EndTest : CodeActivity
     {
 
-        // Arguments of End Test Activity
+        // Finished Creation of End Test Activity
         private InArgument<String> statusValue = "PASSED";
 
         [Category("Status")]
