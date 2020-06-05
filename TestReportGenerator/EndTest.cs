@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Activities;
-using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -14,9 +13,9 @@ namespace TestReportGenerator
 {
     public class EndTest : CodeActivity
     {
-
         // Finished Creation of End Test Activity
         private InArgument<String> statusValue = "PASSED";
+        private EnumScreenCaptureMode orientationValue = EnumScreenCaptureMode.Window;
 
         [Category("Status")]
         [RequiredArgument]
@@ -24,6 +23,14 @@ namespace TestReportGenerator
         {
             get { return this.statusValue; }
             set { this.statusValue = value; }
+        }
+
+        [Category("Screenshot")]
+        [RequiredArgument]
+        public EnumScreenCaptureMode Orientation
+        {
+            get { return this.orientationValue; }
+            set { this.orientationValue = value; }
         }
 
         private static readonly Regex Regex = new Regex("[^a-zA-Z0-9 -]");
@@ -47,6 +54,8 @@ namespace TestReportGenerator
                 string startedTime = doc.Element("Test-Suite").Element("Result").Element("Started").Value;
                 string endedTime = doc.Element("Test-Suite").Element("Result").Element("Ended").Value;
                 string status = doc.Element("Test-Suite").Element("Result").Element("Status").Value;
+
+                TakeScreenshot(startedTime);
 
                 doc.Save("Temp.xml");
 
@@ -146,6 +155,15 @@ namespace TestReportGenerator
                 element.Save("Testing-Report.xml");
                 */
 
+            }
+        }
+
+        private void TakeScreenshot(string startedTime)
+        {
+            Directory.CreateDirectory("Screenshots");
+            using (Bitmap bitmap = ScreenCapture.Capture(this.Orientation))
+            {
+                bitmap.Save("Screenshots/screen_" + startedTime.Replace(" ", "_").Replace("/", "_").Replace(":", "_") + ".jpg", ImageFormat.Jpeg);
             }
         }
 
@@ -340,18 +358,18 @@ namespace TestReportGenerator
             html.AppendLine(string.Format("<div class=\"panel-heading\">Summary - <small>{0}</small></div>", testName));
             html.AppendLine("<div class=\"panel-body\">");
 
-            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Tests</div><div class=\"val ignore-val\">{0}</div></div>", testTests));
-            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Failures</div><div class=\"val {1}\">{0}</div></div>", testFailures, testFailures > 0 ? "text-danger" : string.Empty));
-            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Passed</div><div class=\"val {1}\">{0}</div></div>", testPassed, testPassed > 0 ? "text-success" : string.Empty));
+            html.AppendLine(string.Format("<div class=\"col-md-1 col-sm-2 col-xs-4 col-lg-1 text-center\"><div class=\"stat\">Tests</div><div class=\"val ignore-val\">{0}</div></div>", testTests));
+            html.AppendLine(string.Format("<div class=\"col-md-1 col-sm-2 col-xs-4 col-lg-1 text-center\"><div class=\"stat\">Failures</div><div class=\"val {1}\">{0}</div></div>", testFailures, testFailures > 0 ? "text-danger" : string.Empty));
+            html.AppendLine(string.Format("<div class=\"col-md-1 col-sm-2 col-xs-4 col-lg-1 text-center\"><div class=\"stat\">Passed</div><div class=\"val {1}\">{0}</div></div>", testPassed, testPassed > 0 ? "text-success" : string.Empty));
             //html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Not Run</div><div class=\"val {1}\">{0}</div></div>", testNotRun, testNotRun > 0 ? "text-danger" : string.Empty));
             //html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Inconclusive</div><div class=\"val {1}\">{0}</div></div>", testInconclusive, testInconclusive > 0 ? "text-danger" : string.Empty));
             //html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Ignored</div><div class=\"val {1}\">{0}</div></div>", testIgnored, testIgnored > 0 ? "text-danger" : string.Empty));
             //html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Skipped</div><div class=\"val {1}\">{0}</div></div>", testSkipped, testSkipped > 0 ? "text-danger" : string.Empty));
             //html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Invalid</div><div class=\"val {1}\">{0}</div></div>", testInvalid, testInvalid > 0 ? "text-danger" : string.Empty));
-            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Execution Date</div><div class=\"val\">{0}</div></div>", testDate.ToString("d MMMM yyyy")));
-            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Execution Time</div><div class=\"val\">{0}</div></div>", totalTime));
-            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Platform</div><div class=\"val\">{0}</div></div>", "UiPath"));
-            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-6 text-center\"><div class=\"stat\">Success Rate</div><div class=\"val\">{0}%</div></div>", 100 - percentage));
+            html.AppendLine(string.Format("<div class=\"col-md-4 col-sm-6 col-xs-12 col-lg-3 text-center\"><div class=\"stat\">Execution Date</div><div class=\"val\">{0}</div></div>", testDate.ToString("d MMMM yyyy")));
+            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-4 col-lg-2 text-center\"><div class=\"stat\">Execution Time</div><div class=\"val\">{0}</div></div>", totalTime));
+            html.AppendLine(string.Format("<div class=\"col-md-2 col-sm-4 col-xs-4 col-lg-2 text-center\"><div class=\"stat\">Platform</div><div class=\"val\">{0}</div></div>", "UiPath"));
+            html.AppendLine(string.Format("<div class=\"col-md-1 col-sm-4 col-xs-4 col-lg-2 text-center\"><div class=\"stat\">Success Rate</div><div class=\"val\">{0}%</div></div>", 100 - percentage));
 
             // End summary panel
             html.AppendLine("</div>");
@@ -363,7 +381,6 @@ namespace TestReportGenerator
 
             html.Append("<div class=\"container\">");
             html.Append("<h2>Test Execution Details</h2>");
-            html.Append("<p>All Your Test Case Executions are displayed in the below table.</p>");
             html.Append("<table class=\"table\">");
 
             html.Append("<thead class=\"thead -light\">");
@@ -373,6 +390,7 @@ namespace TestReportGenerator
             html.Append("<th>Started</th>");
             html.Append("<th>Ended</th>");
             html.Append("<th >STATUS</th>");
+            html.Append("<th >Screenshot</th>");
             html.Append("</tr>");
             html.Append("</thead>");
 
@@ -388,12 +406,13 @@ namespace TestReportGenerator
                 string endTime = element.Element("Ended").Value;
                 string status = element.Element("Status").Value;
 
-                html.Append("<tr>");
-                html.Append(string.Format("<td> {0} </td >", testScenario));
-                html.Append(string.Format("<td> {0} </td >", testcaseName));
-                html.Append(string.Format("<td> {0} </td >", startTime));
-                html.Append(string.Format("<td> {0} </td >", endTime));
-                html.Append(string.Format("<td> {0} </td >", status));
+                html.Append("<tr class=\"" + (status.Equals("PASSED") ? "text-success" : "text-danger") + "\">");
+                html.Append(string.Format("<td> {0} </td>", testScenario));
+                html.Append(string.Format("<td> {0} </td>", testcaseName));
+                html.Append(string.Format("<td> {0} </td>", startTime));
+                html.Append(string.Format("<td> {0} </td>", endTime));
+                html.Append(string.Format("<td> {0} </td>", status));
+                html.Append(string.Format("<td> <a href=\"{0}\" target=\"_blank\"><img src=\"{0}\" width=\"50px\" /></a></td>", "./Screenshots/screen_" + startTime.Replace(" ", "_").Replace("/", "_").Replace(":", "_") + ".jpg"));
                 html.Append("</tr>");
 
             }
